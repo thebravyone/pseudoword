@@ -1,0 +1,25 @@
+{
+  "name": "pseudoword",
+  "version": "1.0.0",
+  "description": "a pseudoword generator for node",
+  "main": "pseudoword.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thebravyone/pseudoword.git"
+  },
+  "keywords": [
+    "pseudoword",
+    "markov",
+    "wordoid",
+    "node"
+  ],
+  "author": "thebravyone",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/thebravyone/pseudoword/issues"
+  },
+  "homepage": "https://github.com/thebravyone/pseudoword#readme"
+}
