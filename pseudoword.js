@@ -2,7 +2,6 @@
 * @Author: Guilherme Serradilha <thebravyone>
 * @Date:   23-Apr-2016, 16:27:06
 * @Last modified by:   Guilherme Serradilha
-* @Last modified time: 24-Apr-2016, 12:43:51
 */
 
 "use strict";
@@ -35,10 +34,11 @@ var pseudoword = function(seed, order, charset) {
         //a = charset size
         //n = order
         //bonus insight: a^(0) = 1 and refers to our '$' token
-        for (var i = order; i > 0; i--)
+        for (var i = order; i >= 0; i--)
             max += Math.pow(charset.length, i);
 
-        return actual * 100 / max;
+        console.log('max: ' + max);
+        return actual / max;
     }
 
     /**
@@ -48,21 +48,33 @@ var pseudoword = function(seed, order, charset) {
      */
     self.getWord = function(length) {
 
-        if (!length || !Number.isInteger(length)) length = 20;
+        if (!length || !Number.isInteger(length)) length = 10;
 
-        var pseudo = '',
-            sample = '$';
+        var word = '',
+            sample = '$',
+            maxIterations = 10;
 
-        for (var i = 0; i < length; i++) {
+        for (var iteration = 0; iteration < maxIterations; i++) {
 
-            var nextKey = getNextKey(sample, transitionMatrix);
-            if (nextKey === '$')
-                return pseudo;
+            for (var i = 0; i < length; i++) {
 
-            pseudo += nextKey;
-            sample = pseudo.substr(pseudo.length - order);
+                //proceed to next key
+                var nextKey = getNextKey(sample, transitionMatrix);
+
+                //if you find a '$' token
+                //our pseudoword is done building
+                if (nextKey === '$')
+                    break;
+
+                word += nextKey;
+                sample = word.substr(word.length - order);
+            }
+
+            if (word.length > 2)
+                return word;
         }
-        return pseudo;
+
+        return word;
     }
 
     /**
@@ -109,49 +121,52 @@ var pseudoword = function(seed, order, charset) {
                 //split word into an array of chars
                 var chars = seed[word].split('');
 
-                //loop through all chars
-                //building up our transition matrix
-                for (var pointer = 0; pointer <= chars.length; pointer++) {
+                //get samples of all order sizes
+                //smaller or equal to given 'order'
+                for (var o = order; o > 0; o--) {
 
-                    //range of analysis is based on our 'order' property
-                    //it's defined as a pointer followed by a tail
-                    var tail = pointer - order;
-                    if (tail < 0) tail = 0;
+                    //loop through all chars
+                    //building up our transition matrix
+                    for (var pointer = 0; pointer <= chars.length; pointer++) {
 
-                    //next key of transition
-                    //in case pointer is placed on last char
-                    //use boundary token
-                    //so it collects data of how words should end
-                    var nextKey = '';
-                    if (pointer < chars.length)
-                        nextKey = chars[pointer];
-                    else
-                        nextKey = '$';
+                        //range of analysis is based on our 'order' property
+                        //it's defined as a pointer followed by a tail
+                        var tail = pointer - o;
+                        if (tail < 0) tail = 0;
 
-                    //transition sample
-                    //use boundary token when pointer is initialized
-                    //so it collects data of how words should begin
-                    var sample = '';
-                    if (pointer < 1)
-                        sample = '$';
-                    else if (pointer < chars.length)
-                        sample = seed[word].substr(tail, pointer - tail);
-                    else
-                        sample = seed[word].substr(tail);
+                        //next key of transition
+                        //in case pointer is placed on last char
+                        //use boundary token
+                        //so it collects data of how words should end
+                        var nextKey = '';
+                        if (pointer < chars.length)
+                            nextKey = chars[pointer];
+                        else
+                            nextKey = '$';
 
-                    //create blank transition for given sample
-                    //in case there isn't one
-                    if (!tMatrix.hasOwnProperty(sample))
-                        tMatrix[sample] = createBlankTransition(charset);
+                        //transition sample
+                        //use boundary token when pointer is initialized
+                        //so it collects data of how words should begin
+                        var sample = '';
+                        if (pointer < 1)
+                            sample = '$';
+                        else if (pointer < chars.length)
+                            sample = seed[word].substr(tail, pointer - tail);
+                        else
+                            sample = seed[word].substr(tail);
 
-                    //increment transition values
-                    tMatrix[sample]['transition'][nextKey]++;
-                    tMatrix[sample]['total']++;
+                        //create blank transition for given sample
+                        //in case there isn't one
+                        if (!tMatrix.hasOwnProperty(sample))
+                            tMatrix[sample] = createBlankTransition(charset);
+
+                        //increment transition values
+                        tMatrix[sample]['transition'][nextKey]++;
+                        tMatrix[sample]['total']++;
+                    }
                 }
-
             }
         }
-
         return tMatrix;
     }
 
@@ -207,46 +222,55 @@ var pseudoword = function(seed, order, charset) {
      * @param  {object} tMatrix - transition matrix
      * @return {string}         - string of a single char
      */
-    function getNextKey(sample, tMatrix) {
+    function getNextKey(originalSample, tMatrix) {
 
-        //check if we have records of this sample
-        //in our transition matrix
-        if (!tMatrix.hasOwnProperty(sample))
-            return '$';
+        var sample = originalSample;
 
-        var transitions = tMatrix[sample]['transition'],
-            sortedTransitions = [],
-            rangesTransitions = [];
+        //this loop will reduce sample size
+        //in case it doesn't find a match
+        for (var i = 0; i < originalSample.length; i++) {
 
-        //sort transitions
-        for (var k in transitions)
-            sortedTransitions.push([k, transitions[k]]);
-        sortedTransitions.sort(function(a, b) {return a[1] - b[1]});
+            //check if we have records of this sample
+            //in our transition matrix
+            if (!tMatrix.hasOwnProperty(sample)) {
+                sample = sample.substr(1);
+                continue;
+            }
 
-        //generate probability ranges
-        var accumulated = 0;
-        for (var i = 0; i < sortedTransitions.length; i++) {
-            //clone transition
-            rangesTransitions[i] = sortedTransitions[i];
+            var transitions = tMatrix[sample]['transition'],
+                sortedTransitions = [],
+                rangesTransitions = [];
 
-            //set range
-            accumulated += sortedTransitions[i][1];
-            rangesTransitions[i][1] = accumulated;
-        }
+            //sort transitions
+            for (var k in transitions)
+                sortedTransitions.push([k, transitions[k]]);
+            sortedTransitions.sort(function(a, b) {return a[1] - b[1]});
 
-        //get random value
-        var random = Math.random() * tMatrix[sample]['total'];
+            //generate probability ranges
+            var accumulated = 0;
+            for (var i = 0; i < sortedTransitions.length; i++) {
+                //clone transition
+                rangesTransitions[i] = sortedTransitions[i];
 
-        //evaluate random value against transition probabilities
-        //and pick next key
-        for (var i = 0; i < rangesTransitions.length; i++) {
-            if (random <= rangesTransitions[i][1]){
-                return rangesTransitions[i][0];
-                break;
+                //set range
+                accumulated += sortedTransitions[i][1];
+                rangesTransitions[i][1] = accumulated;
+            }
+
+            //get random value
+            var random = Math.random() * tMatrix[sample]['total'];
+
+            //evaluate random value against transition probabilities
+            //and pick next key
+            for (var i = 0; i < rangesTransitions.length; i++) {
+                if (random <= rangesTransitions[i][1]){
+                    return rangesTransitions[i][0];
+                    //break;
+                }
             }
         }
 
-        return false;
+        return '$';
     }
 
     return self;
