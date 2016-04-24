@@ -2,6 +2,7 @@
 @Author: Guilherme Serradilha
 @Date:   24-Apr-2016, 12:19:54
 @Last modified by:   Guilherme Serradilha
+@Last modified time: 24-Apr-2016, 17:01:46
 -->
 
 
@@ -57,8 +58,16 @@ Returns a new pseudoword. Easy peasy.
 `length {integer}` *(default = 20)* You can set a maximum length, optionally.
 
 ### .density()
-Sometimes your pseudowords will look like a bunch of fragments or complete non-sense. This may be due your seed being too small.
+Sometimes your pseudowords will look like a bunch of fragments or complete non-sense. This may be due your `seed` being too small.
 
-Whenever you face this, double check your `density`.
+Whenever you face this, double check your `density`. You will see our "fruit" example has a pretty low value (around 7.2%):
 
-This function returns a percentage of how many combinations your `seed` can create, against all possible combinations from your `charset`. If `density` is low, it means your reference words are not teaching enough stuff to our generator. We need *moar!*
+```javascript
+console.log(myGenerator.density());
+----
+0.07212857702861623
+```
+
+This function returns a percentage (value between 0 and 1) expressing how many combinations your `seed` can create out of all possible combinations from your `charset`. If `density` is low, it means your reference words are not teaching enough stuff to our generator.
+
+We need *moar!*
