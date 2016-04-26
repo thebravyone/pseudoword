@@ -2,6 +2,7 @@
 * @Author: Guilherme Serradilha <thebravyone>
 * @Date:   23-Apr-2016, 16:27:06
 * @Last modified by:   Guilherme Serradilha
+* @Last modified time: 25-Apr-2016, 22:47:56
 */
 
 "use strict";
@@ -38,17 +39,19 @@ var pseudoword = function(seed, order, charset) {
             max += Math.pow(charset.length, i);
 
         console.log('max: ' + max);
+        console.log('actual: ' + actual);
         return actual / max;
     }
 
     /**
-     * Retrieves a pseudoword from transition matrix
-     * @param  {integer} length - maximum char length
+     * Retrieves a new pseudoword
+     * @param  {integer} minLength - minimum length
+     * @param  {integer} maxLength - maximum length
      * @return {string}
      */
-    self.getWord = function(length) {
+    self.getWord = function(minLength, maxLength) {
 
-        if (!length || !Number.isInteger(length)) length = 10;
+        if (!maxLength || !Number.isInteger(maxLength)) maxLength = 16;
 
         var word = '',
             sample = '$',
@@ -56,9 +59,13 @@ var pseudoword = function(seed, order, charset) {
 
         for (var iteration = 0; iteration < maxIterations; i++) {
 
-            for (var i = 0; i < length; i++) {
+            //reset 'word'
+            word = '';
 
-                //proceed to next key
+            //build a new pseudoword
+            for (var i = 0; i < maxLength; i++) {
+
+                //get a char
                 var nextKey = getNextKey(sample, transitionMatrix);
 
                 //if you find a '$' token
@@ -66,14 +73,21 @@ var pseudoword = function(seed, order, charset) {
                 if (nextKey === '$')
                     break;
 
+                //append char to our pseudoword
                 word += nextKey;
+
+                //move our sample
                 sample = word.substr(word.length - order);
             }
 
-            if (word.length > 2)
+            //check if our newest pseudoword meets requirements
+            if (!minLength || !Number.isInteger(minLength) || word.length >= minLength)
                 return word;
         }
 
+        //in case we exceed maxIterations
+        //return any word, preventing an inf-loop.
+        //This may happen when we have some really bad seed
         return word;
     }
 
@@ -265,7 +279,6 @@ var pseudoword = function(seed, order, charset) {
             for (var i = 0; i < rangesTransitions.length; i++) {
                 if (random <= rangesTransitions[i][1]){
                     return rangesTransitions[i][0];
-                    //break;
                 }
             }
         }

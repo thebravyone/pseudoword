@@ -2,7 +2,7 @@
 @Author: Guilherme Serradilha
 @Date:   24-Apr-2016, 12:19:54
 @Last modified by:   Guilherme Serradilha
-@Last modified time: 24-Apr-2016, 17:01:46
+@Last modified time: 25-Apr-2016, 22:48:20
 -->
 
 
@@ -52,10 +52,13 @@ This function works like a constructor and returns a "generator object" with a t
 
 `charset {string}` *(default = 'abcdefghijklmnopqrstuvwxyzáàãâäéèêëíìîïóòõôöúùûüçß')* Allowed characters when creating pseudowords.
 
-### .getWord([, length])
+### .getWord([minLength, maxLength])
 Returns a new pseudoword. Easy peasy.
 
-`length {integer}` *(default = 20)* You can set a maximum length, optionally.
+You can set a range of lengths, optionally:
+
+`minLength {integer}` *(default = null)*
+`maxLength {integer}` *(default = 16)*
 
 ### .density()
 Sometimes your pseudowords will look like a bunch of fragments or complete non-sense. This may be due your `seed` being too small.
@@ -65,7 +68,7 @@ Whenever you face this, double check your `density`. You will see our "fruit" ex
 ```javascript
 console.log(myGenerator.density());
 ----
-0.07212857702861623
+0.07291258330066641
 ```
 
 This function returns a percentage (value between 0 and 1) expressing how many combinations your `seed` can create out of all possible combinations from your `charset`. If `density` is low, it means your reference words are not teaching enough stuff to our generator.
